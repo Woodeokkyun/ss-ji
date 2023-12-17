@@ -1,0 +1,23 @@
+module.exports = {
+  plugins: [require('@trivago/prettier-plugin-sort-imports')],
+  useTabs: false,
+  printWidth: 80,
+  tabWidth: 2,
+  singleQuote: true,
+  trailingComma: 'es5',
+  jsxBracketSameLine: false,
+  arrowParens: 'always',
+  importOrder: [
+    '^@emotion/(.*)$',
+    '^next/?(.*)$',
+    '^react-?.*/?(.*)$',
+    'reset.css',
+    'app.css',
+    '<THIRD_PARTY_MODULES>',
+    'components',
+    'public',
+    '^[./]',
+  ],
+  importOrderSeparation: true,
+  importOrderSortSpecifiers: true,
+};

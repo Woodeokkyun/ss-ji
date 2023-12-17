@@ -1,0 +1,666 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <title>HTML !DOCTYPE declaration</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        -webkit-tap-highlight-color: transparent;
+        box-sizing: border-box;
+      }
+
+      html {
+        height: 100%;
+        font-family:
+          -apple-system,
+          BlinkMacSystemFont,
+          Segoe UI,
+          Roboto,
+          Oxygen,
+          Ubuntu,
+          Cantarell,
+          Fira Sans,
+          Droid Sans,
+          Helvetica Neue,
+          sans-serif,
+          apple color emoji,
+          segoe ui emoji,
+          segoe ui symbol,
+          noto color emoji;
+        -webkit-font-smoothing: subpixel-antialiased;
+        -webkit-text-size-adjust: 100%;
+        -webkit-appearance: none;
+        -webkit-tap-highlight-color: transparent;
+        user-select: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="wrapper">
+      <div id="print-el">
+        <div
+          id="content-1"
+          style="
+            width: 210mm;
+            height: 297mm;
+            column-count: 2;
+            overflow: hidden;
+            padding: 24px;
+            column-rule: 1px solid #e2e3e5;
+            column-fill: auto;
+          "
+        ></div>
+      </div>
+    </div>
+    <div id="ghost-el" style="width: 363px"></div>
+  </body>
+  <script id="script">
+    const choiceNumbers = ['①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧', '⑨', '⑩'];
+    const choiceLargeAlphabets = [
+      '(A)',
+      '(B)',
+      '(C)',
+      '(D)',
+      '(E)',
+      '(G)',
+      '(H)',
+    ];
+    const choiceSmallAlphabets = [
+      '(a)',
+      '(b)',
+      '(c)',
+      '(d)',
+      '(e)',
+      '(g)',
+      '(h)',
+    ];
+
+    let pageCount = 1;
+    const printEl = document.getElementById(`print-el`);
+    let contentEl = document.getElementById(`content-${pageCount}`);
+    const ghostEl = document.getElementById('ghost-el');
+
+    const setNewContentEl = (el) => {
+      el.id = `content-${pageCount}`;
+      el.style.width = '210mm';
+      el.style.height = '297mm';
+      el.style.columnCount = 2;
+      el.style.columnFill = 'auto';
+      el.style.overflow = 'hidden';
+      el.style.padding = '24px';
+      el.style.columnRule = '1px solid #E2E3E5';
+      el.style.marginBottom = '24px';
+      return el;
+    };
+
+    const setWordEl = (el) => {
+      el.style.padding = '4px 0';
+      el.style.display = 'inline-block';
+      return el;
+    };
+
+    const setPassageEl = (el) => {
+      el.style.fontSize = '15px';
+      el.style.marginTop = '8px';
+      el.style.width = '363px';
+      el.style.wordBreak = 'break-all';
+      el.style.wordWrap = 'break-word';
+      return el;
+    };
+
+    const proccesPassage = (text) => {
+      const regex =
+        /(\s+|[ㄱ-ㅎ|ㅏ-ㅣ|가-힣A-Za-z0-9]+|[.,?!'"“”/_~@#$%&*()=+`’\–\―\—:;\-])/g;
+      const splitText = text.match(regex);
+      const spaceIndex = [];
+      const result = [];
+      let spaceCount = 0;
+
+      splitText?.map((word, index) => {
+        if (word === ' ') {
+          spaceIndex.push(index - 1 - spaceCount);
+          spaceCount += 1;
+        } else {
+          result.push(word);
+        }
+      });
+      return { spaceIndex, result };
+    };
+
+    const isSpecialCharacter = (text) => {
+      const regex = /[^ㄱ-ㅎ|ㅏ-ㅣ|가-힣a-zA-Z0-9]+/g;
+      return regex.test(text);
+    };
+
+    const renderQuizzes = (content) => {
+      let lastHeight = 2148;
+      if (content.title || content.logo) {
+        const contentHeaderWrapperEl = document.createElement('div');
+        contentHeaderWrapperEl.style.display = 'flex';
+        contentHeaderWrapperEl.style.justifyContent = 'space-between';
+        contentHeaderWrapperEl.style.alignItems = 'center';
+        contentHeaderWrapperEl.style.paddingBottom = '16px';
+        contentHeaderWrapperEl.style.marginBottom = '16px';
+        contentHeaderWrapperEl.style.borderBottom = '1px solid #E2E3E5';
+        contentHeaderWrapperEl.style.columnSpan = 'all';
+        const contentHeaderLeftEl = document.createElement('div');
+        const contentHeaderRightEl = document.createElement('div');
+        contentHeaderRightEl.style.display = 'flex';
+        contentHeaderRightEl.style.flexDirection = 'column';
+        contentHeaderRightEl.style.justifyContent = 'flex-end';
+        contentHeaderWrapperEl.appendChild(contentHeaderLeftEl);
+        contentHeaderWrapperEl.appendChild(contentHeaderRightEl);
+
+        if (content.subTitle) {
+          const contentSubTitleEl = document.createElement('p');
+          contentSubTitleEl.style.fontSize = '10px';
+          contentSubTitleEl.style.marginBottom = '4px';
+          contentSubTitleEl.style.lineHeight = '1.5';
+          contentSubTitleEl.innerHTML = content.subTitle;
+          contentHeaderLeftEl.appendChild(contentSubTitleEl);
+        }
+        if (content.title) {
+          const contentTitleEl = document.createElement('h3');
+          contentTitleEl.style.fontSize = '24px';
+          contentTitleEl.style.fontWeight = 'bold';
+          contentTitleEl.style.lineHeight = '1.5';
+          contentTitleEl.innerHTML = content.title;
+          contentHeaderLeftEl.appendChild(contentTitleEl);
+        }
+        if (content.logo) {
+          const contentLogoEl = document.createElement('img');
+          contentLogoEl.style.height = '48px';
+          contentLogoEl.src = content.logo;
+          contentHeaderRightEl.appendChild(contentLogoEl);
+        }
+        ghostEl.appendChild(contentHeaderWrapperEl);
+        const contentHeaderHeight = ghostEl.offsetHeight;
+        lastHeight = lastHeight - contentHeaderHeight - 16;
+        contentEl.appendChild(contentHeaderWrapperEl);
+      }
+
+      content.quizzes.map((quiz, index) => {
+        let lh = lastHeight;
+        const createSubHeader = () => {
+          if (content.title) {
+            const contentHeaderWrapperEl = document.createElement('div');
+            contentHeaderWrapperEl.style.display = 'flex';
+            contentHeaderWrapperEl.style.justifyContent = 'space-between';
+            contentHeaderWrapperEl.style.alignItems = 'center';
+            contentHeaderWrapperEl.style.marginBottom = '8px';
+            contentHeaderWrapperEl.style.paddingBottom = '8px';
+            contentHeaderWrapperEl.style.borderBottom = '1px solid #E2E3E5';
+            contentHeaderWrapperEl.style.columnSpan = 'all';
+            const contentTitleEl = document.createElement('p');
+            contentTitleEl.style.fontSize = '10px';
+            contentTitleEl.style.fontWeight = 'bold';
+            contentTitleEl.innerHTML = content.title;
+            contentHeaderWrapperEl.appendChild(contentTitleEl);
+
+            if (content.logo) {
+              const contentLogoEl = document.createElement('img');
+              contentLogoEl.style.height = '24px';
+              contentLogoEl.src = content.logo;
+              contentHeaderWrapperEl.appendChild(contentLogoEl);
+            }
+
+            contentEl.appendChild(contentHeaderWrapperEl);
+          }
+        };
+
+        ghostEl.innerHTML = '';
+        const {
+          title,
+          type,
+          category,
+          source,
+          unit,
+          paragraph,
+          comment,
+          passage,
+          choices,
+          answer,
+          footnote,
+          selectionPositions,
+        } = quiz;
+        const isSelectionType =
+          category.includes('underline') || category.includes('choice');
+
+        const quizHeaderEl = document.createElement('div');
+        quizHeaderEl.style.display = 'flex';
+        quizHeaderEl.style.flexDirection = 'column';
+        quizHeaderEl.style.width = '363px';
+        const indexWrapperEl = document.createElement('div');
+        indexWrapperEl.style.display = 'flex';
+        indexWrapperEl.style.alignItems = 'center';
+        indexWrapperEl.style.marginBottom = '8px';
+        quizHeaderEl.appendChild(indexWrapperEl);
+
+        const indexEl = document.createElement('h4');
+        indexEl.style.fontSize = '16px';
+        indexEl.style.fontWeight = 'bold';
+        indexEl.style.marginRight = '4px';
+        indexEl.style.lineHeight = '1.5';
+        indexEl.style.color = '#3EA381';
+        indexEl.innerHTML = `${index + 1}`;
+        indexWrapperEl.appendChild(indexEl);
+        const sourceEl = document.createElement('span');
+        sourceEl.style.fontSize = '12px';
+        sourceEl.style.color = '#4F556B';
+        sourceEl.innerHTML = `${source}${unit && `ㆍ${unit}`}${
+          paragraph && `ㆍ${paragraph}`
+        }`;
+        indexWrapperEl.appendChild(sourceEl);
+        if (title) {
+          const titleEl = document.createElement('h4');
+          titleEl.style.fontSize = '15px';
+          titleEl.style.lineHeight = '1.5';
+          titleEl.innerHTML = `${quiz.title}`;
+          quizHeaderEl.appendChild(titleEl);
+        }
+
+        ghostEl.appendChild(quizHeaderEl);
+        const quizHeaderHeight = ghostEl.offsetHeight;
+        if (lh - quizHeaderHeight < 180) {
+          pageCount++;
+          const newContentEl = setNewContentEl(document.createElement('div'));
+          printEl.appendChild(newContentEl);
+          contentEl = newContentEl;
+          createSubHeader();
+          lh = 2107 - quizHeaderHeight - 8;
+        } else {
+          lh = lh - quizHeaderHeight - 8;
+        }
+        contentEl.appendChild(quizHeaderEl);
+
+        if (passage) {
+          ghostEl.innerHTML = '';
+          const passageEl = setPassageEl(document.createElement('p'));
+          if (isSelectionType) {
+            const isUnderline = category.includes('underline');
+            let selectionText = '';
+            let selectionIndex = null;
+
+            const { result: splitPassage, spaceIndex } =
+              proccesPassage(passage);
+            splitPassage.map((word, index) => {
+              const isSelection = selectionPositions.some(
+                (position, positionIndex) => {
+                  if (index >= position.start && index <= position.end) {
+                    selectionIndex = positionIndex;
+                    return true;
+                  }
+                }
+              );
+
+              if (isSelection) {
+                const wrapperEl = document.createElement('span');
+                wrapperEl.style.display = 'initial';
+                selectionText += word;
+                if (spaceIndex.includes(index)) {
+                  selectionText += ' ';
+                }
+                if (
+                  selectionIndex !== null &&
+                  selectionPositions[selectionIndex].end === index
+                ) {
+                  const { changeText, isSwitched } =
+                    selectionPositions[selectionIndex];
+                  const alphabetEl = document.createElement('span');
+                  alphabetEl.innerText = `${
+                    isUnderline
+                      ? choiceSmallAlphabets[selectionIndex]
+                      : choiceLargeAlphabets[selectionIndex]
+                  } `;
+                  const wordEl = setWordEl(document.createElement('span'));
+                  wordEl.style.display = 'initial';
+                  if (isUnderline) {
+                    wordEl.style.textDecoration = 'underline';
+                    wordEl.style.marginRight = '4px';
+                    wordEl.innerText = changeText ? changeText : selectionText;
+                    wrapperEl.appendChild(alphabetEl);
+                    wrapperEl.appendChild(wordEl);
+                    passageEl.appendChild(wrapperEl);
+                  } else {
+                    wordEl.style.border = '1px solid black';
+                    wordEl.style.padding = '4px 2px';
+                    wordEl.style.marginRight = '4px';
+                    wordEl.innerText = isSwitched
+                      ? `${changeText} / ${selectionText}`
+                      : `${selectionText} / ${changeText}`;
+                    wrapperEl.appendChild(alphabetEl);
+                    wrapperEl.appendChild(wordEl);
+                    passageEl.appendChild(wrapperEl);
+                  }
+                  selectionText = '';
+                }
+              } else if (word === '\n') {
+                passageEl.appendChild(document.createElement('br'));
+              } else if (word.indexOf('\n') === 0) {
+                passageEl.appendChild(document.createElement('br'));
+                const wordEl = setWordEl(document.createElement('span'));
+                wordEl.innerText = word;
+                passageEl.appendChild(wordEl);
+              } else if (word.indexOf('\n') > 0) {
+                const wordEl = setWordEl(document.createElement('span'));
+                wordEl.innerText = word;
+                passageEl.appendChild(wordEl);
+                passageEl.appendChild(document.createElement('br'));
+              } else {
+                const wordEl = setWordEl(document.createElement('span'));
+                wordEl.innerText = word;
+                passageEl.appendChild(wordEl);
+                if (spaceIndex.includes(index)) {
+                  const spaceEl = setWordEl(document.createElement('span'));
+                  spaceEl.innerText = ' ';
+                  spaceEl.style.width = '4px';
+                  passageEl.appendChild(spaceEl);
+                }
+              }
+            });
+            ghostEl.appendChild(passageEl);
+            const passageHeight = ghostEl.offsetHeight;
+            if (lh - passageHeight < 220) {
+              if (isSelectionType) {
+                ghostEl.innerHTML = '';
+                const splitPassageEl = setPassageEl(
+                  document.createElement('p')
+                );
+                Array.from(passageEl.children).map((el, i) => {
+                  const cloneEl = el.cloneNode(true);
+                  if (!cloneEl) {
+                    return;
+                  }
+                  ghostEl.appendChild(splitPassageEl);
+                  const splitPassageHeight = ghostEl.offsetHeight;
+                  if (lh - 160 < splitPassageHeight) {
+                    contentEl.appendChild(splitPassageEl.cloneNode(true));
+                    splitPassageEl.innerHTML = '';
+                    pageCount++;
+                    const newContentEl = setNewContentEl(
+                      document.createElement('div')
+                    );
+                    printEl.appendChild(newContentEl);
+                    contentEl = newContentEl;
+                    createSubHeader();
+                    lh = 2156;
+                  }
+                  splitPassageEl.appendChild(cloneEl);
+                });
+                ghostEl.innerHTML = '';
+                ghostEl.appendChild(splitPassageEl);
+                const newSplitPassageHeight = ghostEl.offsetHeight;
+                lh = lh - newSplitPassageHeight - 8;
+                contentEl.appendChild(splitPassageEl);
+              } else {
+                pageCount++;
+                const newContentEl = setNewContentEl(
+                  document.createElement('div')
+                );
+                printEl.appendChild(newContentEl);
+                contentEl = newContentEl;
+                createSubHeader();
+                lh = 2107 - passageHeight - 8;
+              }
+            } else {
+              contentEl.appendChild(passageEl);
+              lh = lh - passageHeight - 8;
+            }
+          }
+        }
+        if (footnote) {
+          ghostEl.innerHTML = '';
+          const footnoteEl = document.createElement('p');
+          footnoteEl.style.fontSize = '12px';
+          footnoteEl.style.marginTop = '8px';
+          footnoteEl.style.width = '363px';
+          footnoteEl.style.wordBreak = 'break-all';
+          footnoteEl.style.wordWrap = 'break-word';
+          footnoteEl.style.lineHeight = '1.5';
+          footnoteEl.style.textAlign = 'right';
+          footnoteEl.style.whiteSpace = 'pre-wrap';
+          footnoteEl.innerHTML = footnote;
+          ghostEl.appendChild(footnoteEl);
+          const footnoteHeight = ghostEl.offsetHeight;
+          if (lh - footnoteHeight < 150) {
+            pageCount++;
+            const newContentEl = setNewContentEl(document.createElement('div'));
+            printEl.appendChild(newContentEl);
+            contentEl = newContentEl;
+            createSubHeader();
+            lh = 2107 - footnoteHeight - 8;
+          } else {
+            lh = lh - footnoteHeight - 8;
+          }
+          contentEl.appendChild(footnoteEl);
+        }
+
+        const renderSquareChoice = (choice) => {
+          const splitChoice = choice.split('/');
+        };
+        if (choices) {
+          ghostEl.innerHTML = '';
+          const isChoice =
+            category.includes('grammar-choice') ||
+            category.includes('vocabulary-choice');
+          const isUnderline = category.includes('underline');
+          const choicesEl = document.createElement('div');
+          choicesEl.style.display = 'flex';
+          choicesEl.style.flexDirection = 'column';
+          choicesEl.style.marginTop = '16px';
+          choicesEl.style.width = '363px';
+          choicesEl.style.marginBottom = '48px';
+          if (isUnderline) {
+            choicesEl.style.flexDirection = 'row';
+            choicesEl.style.justifyContent = 'space-between';
+          }
+          choices.map((choice, index) => {
+            const choiceEl = document.createElement('p');
+            choiceEl.style.display = 'flex';
+            choiceEl.style.alignItems = 'center';
+            choiceEl.style.marginTop = '8px';
+            const numberEl = document.createElement('span');
+            numberEl.innerText = choiceNumbers[index];
+            numberEl.style.flex = '0 0 20px';
+            choiceEl.appendChild(numberEl);
+            if (isChoice) {
+              const splitChoice = choice.title.split('/');
+              const splitChoiceEl1 = document.createElement('span');
+              const splitChoiceEl2 = document.createElement('span');
+              const splitChoiceEl3 = document.createElement('span');
+
+              splitChoiceEl1.innerText = splitChoice[0];
+              splitChoiceEl2.innerText = splitChoice[1];
+              splitChoiceEl3.innerText = splitChoice[2];
+
+              splitChoiceEl1.style.flex = '1';
+              splitChoiceEl2.style.flex = '1';
+              splitChoiceEl3.style.flex = '1';
+
+              choiceEl.appendChild(splitChoiceEl1);
+              choiceEl.appendChild(splitChoiceEl2);
+              choiceEl.appendChild(splitChoiceEl3);
+            } else {
+              choiceEl.appendChild(document.createTextNode(choice.title));
+            }
+            choicesEl.appendChild(choiceEl);
+          });
+
+          ghostEl.appendChild(choicesEl);
+          const choicesHeight = ghostEl.offsetHeight;
+          if (lh - choicesHeight < 180) {
+            pageCount++;
+            const newContentEl = setNewContentEl(document.createElement('div'));
+            printEl.appendChild(newContentEl);
+            contentEl = newContentEl;
+            createSubHeader();
+            lh = 2107 - choicesHeight - 48;
+          } else {
+            lh = lh - choicesHeight - 48;
+          }
+
+          contentEl.appendChild(choicesEl);
+        }
+        lastHeight = lh;
+      });
+    };
+    const renderAnswerSheet = (content) => {
+      let lastHeight = 2148;
+      ghostEl.innerHTML = '';
+      const createSubHeader = () => {
+        if (content.title) {
+          const contentHeaderWrapperEl = document.createElement('div');
+          contentHeaderWrapperEl.style.display = 'flex';
+          contentHeaderWrapperEl.style.justifyContent = 'space-between';
+          contentHeaderWrapperEl.style.alignItems = 'center';
+          contentHeaderWrapperEl.style.marginBottom = '8px';
+          contentHeaderWrapperEl.style.paddingBottom = '8px';
+          contentHeaderWrapperEl.style.borderBottom = '1px solid #E2E3E5';
+          contentHeaderWrapperEl.style.columnSpan = 'all';
+          const contentTitleEl = document.createElement('p');
+          contentTitleEl.style.fontSize = '10px';
+          contentTitleEl.style.fontWeight = 'bold';
+          contentTitleEl.innerHTML = content.title;
+          contentHeaderWrapperEl.appendChild(contentTitleEl);
+
+          if (content.logo) {
+            const contentLogoEl = document.createElement('img');
+            contentLogoEl.style.height = '24px';
+            contentLogoEl.src = content.logo;
+            contentHeaderWrapperEl.appendChild(contentLogoEl);
+          }
+
+          contentEl.appendChild(contentHeaderWrapperEl);
+        }
+      };
+      pageCount++;
+      const newContentEl = setNewContentEl(document.createElement('div'));
+      printEl.appendChild(newContentEl);
+      contentEl = newContentEl;
+      createSubHeader();
+      lastHeight = 2107;
+      const answerList = [];
+      content.quizzes.map((quiz) => {
+        quiz.choices.map((choice, i) => {
+          if (choice.isAnswer) {
+            answerList.push({
+              explanation: quiz.explanation,
+              answer: i,
+            });
+          }
+        });
+      });
+      const answerListWrapEl = document.createElement('div');
+      answerListWrapEl.style.paddingBottom = '12px';
+      answerListWrapEl.style.borderBottom = '1px dashed #F1F1F1';
+      const answerTitleEl = document.createElement('h3');
+      answerTitleEl.style.fontSize = '14px';
+      answerTitleEl.style.fontWeight = 'bold';
+      answerTitleEl.style.color = '#8378FA';
+      answerTitleEl.style.marginBottom = '12px';
+      answerTitleEl.style.marginTop = '12px';
+      answerTitleEl.innerHTML = '정답';
+      answerListWrapEl.appendChild(answerTitleEl);
+      const answerSheetEl = document.createElement('div');
+      answerSheetEl.style.width = '348px';
+      answerSheetEl.style.display = 'grid';
+      answerSheetEl.style.gridTemplateColumns = 'repeat(5, 1fr)';
+      answerList.map((answer, index) => {
+        const answerWrapEl = document.createElement('div');
+        answerWrapEl.style.display = 'flex';
+        answerWrapEl.style.alignItems = 'center';
+        answerWrapEl.style.padding = '12px 0';
+        const quizNumberEl = document.createElement('span');
+        quizNumberEl.style.fontSize = '12px';
+        quizNumberEl.style.fontWeight = 'bold';
+        quizNumberEl.style.color = '#3EA381';
+        quizNumberEl.style.flex = '1';
+        quizNumberEl.innerHTML = `${index + 1}`;
+        answerWrapEl.appendChild(quizNumberEl);
+        const answerEl = document.createElement('span');
+        answerEl.style.fontSize = '12px';
+        answerEl.style.flex = '2';
+        answerEl.innerHTML = `${choiceNumbers[answer.answer]}`;
+        answerWrapEl.appendChild(answerEl);
+        answerSheetEl.appendChild(answerWrapEl);
+      });
+      answerListWrapEl.appendChild(answerSheetEl);
+      ghostEl.appendChild(answerListWrapEl);
+      const answerListHeight = ghostEl.offsetHeight;
+      lastHeight = lastHeight - answerListHeight - 12;
+      contentEl.appendChild(answerListWrapEl);
+
+      const explanationTitleEl = answerTitleEl.cloneNode(true);
+      explanationTitleEl.innerHTML = '해설';
+      lastHeight = lastHeight - 42;
+      contentEl.appendChild(explanationTitleEl);
+      answerList.map((answer, index) => {
+        let lh = lastHeight;
+        const answerWrapEl = document.createElement('div');
+        answerWrapEl.style.display = 'flex';
+        answerWrapEl.style.alignItems = 'center';
+        answerWrapEl.style.padding = '12px 0';
+        const quizNumberEl = document.createElement('span');
+        quizNumberEl.style.fontSize = '12px';
+        quizNumberEl.style.fontWeight = 'bold';
+        quizNumberEl.style.color = '#3EA381';
+        quizNumberEl.style.marginRight = '8px';
+        quizNumberEl.innerHTML = `${index + 1}`;
+        answerWrapEl.appendChild(quizNumberEl);
+        const answerEl = document.createElement('span');
+        answerEl.style.fontSize = '12px';
+        answerEl.innerHTML = `${choiceNumbers[answer.answer]}`;
+        answerWrapEl.appendChild(answerEl);
+        answerSheetEl.appendChild(answerWrapEl);
+
+        ghostEl.appendChild(answerWrapEl);
+        const answerHeight = ghostEl.offsetHeight;
+        if (lh - answerHeight < 80) {
+          pageCount++;
+          const newContentEl = setNewContentEl(document.createElement('div'));
+          printEl.appendChild(newContentEl);
+          contentEl = newContentEl;
+          createSubHeader();
+          lh = 2107 - answerHeight;
+        } else {
+          lh = lh - answerHeight;
+        }
+        contentEl.appendChild(answerWrapEl);
+
+        ghostEl.innerHTML = '';
+        const explanationEl = document.createElement('p');
+        explanationEl.style.fontSize = '12px';
+        explanationEl.style.marginBottom = '24px';
+        explanationEl.style.width = '363px';
+        explanationEl.style.wordBreak = 'break-all';
+        explanationEl.style.wordWrap = 'break-word';
+        explanationEl.style.whiteSpace = 'pre-wrap';
+        explanationEl.style.lineHeight = '1.5';
+        explanationEl.innerHTML = `[해설]\n${answer.explanation}`;
+        ghostEl.appendChild(explanationEl);
+        const explanationHeight = ghostEl.offsetHeight;
+        if (lh - explanationHeight < 120) {
+          pageCount++;
+          const newContentEl = setNewContentEl(document.createElement('div'));
+          printEl.appendChild(newContentEl);
+          contentEl = newContentEl;
+          createSubHeader();
+          lh = 2107 - explanationHeight - 24;
+        } else {
+          lh = lh - explanationHeight - 24;
+        }
+        contentEl.appendChild(explanationEl);
+        lastHeight = lh;
+      });
+    };
+
+    window.addEventListener('message', async function (e) {
+      if (e.data.content.quizzes) {
+        await renderQuizzes(e.data.content);
+        await renderAnswerSheet(e.data.content);
+      }
+    });
+  </script>
+</html>
