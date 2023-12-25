@@ -64,6 +64,13 @@ export interface IQuiz {
   passageId?: string;
   choices?: IChoice[];
   answer?: string[];
+  answerType?: string;
+  description?:
+    | {
+        title: string;
+        contents: string[];
+      }
+    | undefined;
   selectionPositions?: ISelectionPosition[];
   explanation?: string;
   type?: QuizTypes;

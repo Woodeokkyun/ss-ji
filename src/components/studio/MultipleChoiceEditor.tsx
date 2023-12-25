@@ -107,14 +107,6 @@ const MultipleChoiceEditor = ({
     <>
       <div css={MultipleChoiceEditorCSS}>
         <div className="multiple-choice-wrapper">
-          <p>지시문</p>
-          <input
-            className="title-input"
-            type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="다음 글의 제목으로 가장 적절한 것은?"
-          />
           <p>선택지 내용을 입력 후, 정답이 될 선택지의 번호를 클릭해주세요.</p>
           <div className="multiple-choice-list">
             {Array(choices.length)

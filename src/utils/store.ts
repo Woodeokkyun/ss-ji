@@ -3,9 +3,7 @@ import {
   IHasPassagesUnit,
   IQuiz,
   ISelectionPosition,
-  IUnitItems,
 } from '../../model';
-import { MOCK_QUIZZES } from '@/quiz';
 import { EditorState } from 'draft-js';
 import { temporal, TemporalState } from 'zundo';
 import { create, useStore } from 'zustand';
@@ -68,9 +66,17 @@ export const useQuizzesHistory = <T extends unknown>(
 export interface QuizStore {
   data: {
     selectionPositions: ISelectionPosition[];
+    selectionTarget: 'passage' | 'description';
     passageState: EditorState;
     selectedCategory: SelectOption | undefined;
     selectedTitle: SelectOption | undefined;
+    selectedAnswerType: 'choice' | 'essay';
+    description:
+      | {
+          title: string;
+          contents: string[];
+        }
+      | undefined;
     quizStatus: SelectionStatus;
     explanation: string | undefined;
     hasFootnote: boolean;
@@ -101,8 +107,11 @@ export const useQuizStore = create<QuizStore>()(
     data: {
       selectionPositions: [],
       passageState: EditorState.createEmpty(),
+      selectionTarget: 'passage',
       selectedCategory: undefined,
       selectedTitle: undefined,
+      selectedAnswerType: 'choice',
+      description: undefined,
       quizStatus: SelectionStatus.makeSelection,
       explanation: undefined,
       hasFootnote: false,

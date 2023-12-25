@@ -50,6 +50,8 @@ const QuizEditorModal = ({
   const { data, setData } = useQuizStore();
 
   const {
+    description,
+    selectedAnswerType,
     selectionPositions,
     passageState,
     selectedCategory,
@@ -73,8 +75,6 @@ const QuizEditorModal = ({
 
   const { undo, redo } = useQuizHistory((state) => state);
 
-  const [selectedAnswerType, setSelectedAnswerType] =
-    useState<string>('choice');
   const [quizCategories, setQuizCategories] = useState<SelectOption[]>([]);
   const [quizTitles, setQuizTitles] = useState<SelectOption[]>([]);
   const { data: itemTitleTypes } = useQuery(
@@ -109,12 +109,12 @@ const QuizEditorModal = ({
     if (!selectedCategory) {
       return;
     }
+
     const targetCategory = itemTitleTypes?.answerTypes
       .find((type) => type.value === selectedAnswerType)
       ?.itemTypes.find((itemType) => itemType.value === selectedCategory.value);
     if (targetCategory) {
       const quizTitles = targetCategory.titleTypes.map((title) => {
-        console.log(title);
         return {
           label: title.defaultTitle,
           value: title.value,
@@ -122,7 +122,7 @@ const QuizEditorModal = ({
       });
       setQuizTitles(quizTitles);
     }
-  }, [selectedCategory]);
+  }, [selectedCategory, selectedAnswerType]);
 
   const [localPassageState, setLocalPassageState] = useState<EditorState>(
     EditorState.createEmpty()
@@ -214,12 +214,14 @@ const QuizEditorModal = ({
           return {
             ...q,
             category: `${selectedCategory.value}-${selectedTitle.value}`,
-            title,
+            title: selectedTitle.label,
             passage,
+            answerType: selectedAnswerType,
             ...(footnote ? { footnote } : { footnote: '' }),
             ...(explanation ? { explanation } : {}),
             ...(choices ? { choices } : {}),
             ...(selectionPositions ? { selectionPositions } : {}),
+            ...(description ? { description } : {}),
           };
         } else {
           return q;
@@ -233,12 +235,14 @@ const QuizEditorModal = ({
       const newQuiz: IQuiz = {
         id,
         category: selectedCategory.value,
-        title,
+        title: selectedTitle.label,
         passage,
+        answerType: selectedAnswerType,
         ...(footnote ? { footnote } : {}),
         ...(explanation ? { explanation } : {}),
         ...(choices ? { choices } : {}),
         ...(selectionPositions ? { selectionPositions } : {}),
+        ...(description ? { description } : {}),
       };
       newQuizzes = [...quizzes, newQuiz];
 
@@ -266,8 +270,11 @@ const QuizEditorModal = ({
     setData({
       selectionPositions: [],
       passageState: EditorState.createEmpty(),
+      selectionTarget: 'passage',
       selectedCategory: undefined,
       selectedTitle: undefined,
+      selectedAnswerType: 'choice',
+      description: undefined,
       quizStatus: SelectionStatus.makeSelection,
       explanation: undefined,
       hasFootnote: false,
@@ -309,38 +316,34 @@ const QuizEditorModal = ({
     });
   };
 
-  const changeSelectCategory = useCallback(
-    (category: SelectOption) => {
-      if (selectedCategory?.value === category.value) {
-        return;
-      }
-      if (
-        category.value === 'clear' &&
-        confirm('작업하신 내용이 초기화됩니다.\n수정하시겠습니까?')
-      ) {
-        setData({
-          ...data,
-          selectedCategory: undefined,
-          passageState: localPassageState,
-          choices: [],
-          selectionPositions: [],
-        });
-        return;
-      }
-      setTitle(DefaultCategoryQuizTitles[category.value]);
+  const changeSelectCategory = (category: SelectOption) => {
+    if (selectedCategory?.value === category.value) {
+      return;
+    }
+    if (
+      category.value === 'clear' &&
+      confirm('작업하신 내용이 초기화됩니다.\n수정하시겠습니까?')
+    ) {
       setData({
         ...data,
-        quizStatus: SelectionStatus.makeSelection,
+        selectedCategory: undefined,
         passageState: localPassageState,
-        selectedCategory: category,
-        footnote,
-        hasFootnote: true,
         choices: [],
         selectionPositions: [],
       });
-    },
-    [data, selectedCategory]
-  );
+      return;
+    }
+    setData({
+      ...data,
+      quizStatus: SelectionStatus.makeSelection,
+      passageState: localPassageState,
+      selectedCategory: category,
+      footnote,
+      hasFootnote,
+      choices: [],
+      selectionPositions: [],
+    });
+  };
 
   const changeSelectedTitle = useCallback(
     (title: SelectOption) => {
@@ -366,6 +369,20 @@ const QuizEditorModal = ({
         <Button
           type="border"
           onClick={() => {
+            setData({
+              selectionPositions: [],
+              passageState: EditorState.createEmpty(),
+              selectionTarget: 'passage',
+              selectedCategory: undefined,
+              selectedTitle: undefined,
+              selectedAnswerType: 'choice',
+              description: undefined,
+              quizStatus: SelectionStatus.makeSelection,
+              explanation: undefined,
+              hasFootnote: false,
+              footnote: undefined,
+              choices: [],
+            });
             props.onClose();
           }}
         >
@@ -555,7 +572,9 @@ const QuizEditorModal = ({
       selectedCategory.value === 'purpose-choice' ||
       selectedCategory.value === 'match-choice' ||
       selectedCategory.value === 'mismatch-choice' ||
-      selectedTitle?.value === 'basic'
+      selectedTitle?.value === 'basic' ||
+      selectedTitle?.value === 'match' ||
+      selectedTitle?.value === 'misMatch'
     ) {
       return (
         <MultipleChoiceEditor
@@ -610,10 +629,11 @@ const QuizEditorModal = ({
         <SentenceInfoEditor
           quizStatus={quizStatus}
           selectionPositions={selectionPositions}
-          choices={choices}
           removeSelection={removeSelection}
           clearChangeText={clearChangeText}
           renderExplanations={renderExplanations}
+          quizData={data}
+          setData={setData}
         />
       );
     }
@@ -689,7 +709,9 @@ const QuizEditorModal = ({
                     value="choice"
                     type="radio"
                     checked={selectedAnswerType === 'choice'}
-                    onChange={() => setSelectedAnswerType('choice')}
+                    onChange={() =>
+                      setQuizValue('selectedAnswerType', 'choice')
+                    }
                   />
                   <label htmlFor="choice-type">객관식</label>
                 </div>
@@ -700,13 +722,13 @@ const QuizEditorModal = ({
                     value="essay"
                     type="radio"
                     checked={selectedAnswerType === 'essay'}
-                    onChange={() => setSelectedAnswerType('essay')}
+                    onChange={() => setQuizValue('selectedAnswerType', 'essay')}
                   />
                   <label htmlFor="essay-type">서술형</label>
                 </div>
               </div>
               <Select
-                key={selectedCategory?.value}
+                key={`${selectedAnswerType}-${selectedCategory?.value}`}
                 placeholder="문제 유형을 선택해주세요."
                 options={[
                   ...quizCategories,

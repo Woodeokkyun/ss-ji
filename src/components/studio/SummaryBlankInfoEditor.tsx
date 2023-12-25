@@ -1,20 +1,24 @@
 import { Radius, Sizes, Spacing } from 'solvook-design-system';
 import { Icon, XCircle } from 'solvook-design-system/icon';
 import Image from '../common/Image';
-import { SelectionStatus } from '../common/SelectionViewer';
+import SelectionViewer, {
+  SelectionStatus,
+  SelectionType,
+} from '../common/SelectionViewer';
 import { IChoice, ISelectionPosition } from '../../../model';
 import { AnswerWrapperCSS } from '../modal/QuizEditorModal';
 import { choiceNumbers } from '@/quiz';
 import classNames from 'classnames';
 import Border from '../common/Border';
 import { Theme, css, useTheme } from '@emotion/react';
-import { useEffect, useState } from 'react';
+import { SyntheticEvent, useEffect, useState } from 'react';
 import { QuizStore } from '@/utils/store';
+import { EditorState } from 'draft-js';
 
 type Props = {
   quizStatus: SelectionStatus;
   selectionPositions: ISelectionPosition[];
-  removeSelection: (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => void;
+  removeSelection?: (e: SyntheticEvent<HTMLButtonElement>) => void;
   clearChangeText: () => void;
   renderExplanations: () => JSX.Element;
   quizData: QuizStore['data'];
@@ -30,6 +34,10 @@ const SentenceInfoEditor = ({
   renderExplanations,
 }: Props) => {
   const theme = useTheme();
+  const [localPassageState, setLocalPassageState] = useState<EditorState>(
+    EditorState.createEmpty()
+  );
+
   const [requireWords, setRequireWords] = useState<string[]>(['']);
   useEffect(() => {
     if (selectionPositions.length === 0) {
@@ -50,20 +58,22 @@ const SentenceInfoEditor = ({
   }, [requireWords]);
   return (
     <div className="quiz-info__guide">
-      {quizStatus !== SelectionStatus.complete && (
-        <Image
-          src="/assets/quiz-arrow.gif"
-          alt="quizInfoArrow"
-          width={20}
-          height={16}
-        />
-      )}
-      {quizStatus === SelectionStatus.makeSelection && (
+      {/* {quizStatus === SelectionStatus.makeSelection && (
         <h4>밑줄로 지정할 곳을 클릭하세요.</h4>
       )}
       {quizStatus === SelectionStatus.makeAnswer && (
         <h4>밑줄을 선택하여 영작 대상 내용을 입력하세요.</h4>
-      )}
+      )} */}
+      <SelectionViewer
+        passage={localPassageState.getCurrentContent().getPlainText()}
+        status={quizStatus}
+        selectionPositions={selectionPositions}
+        type={SelectionType.underline}
+        removeSelection={removeSelection}
+        setData={setData}
+        maxSelection={2}
+        placeholder="대치할 단어를 입력해주세요."
+      />
       {quizStatus === SelectionStatus.complete && (
         <div css={SenetenceEditorCSS}>
           <p>정답</p>

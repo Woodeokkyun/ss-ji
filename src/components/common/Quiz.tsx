@@ -71,6 +71,7 @@ const Quiz = ({
   const isSquare =
     quiz.category.includes('grammar-choice') ||
     quiz.category.includes('vocabulary-choice');
+  console.log(quiz);
   return (
     <div
       css={quizCSS}
@@ -151,7 +152,17 @@ const Quiz = ({
             )}
           </div>
           {quiz.footnote && <p className="footnote">{quiz.footnote}</p>}
-          {showAnswer && quiz.choices && (
+          {quiz.description && (
+            <div className="description">
+              <p className="description__title">{quiz.description.title}</p>
+              <ul className="description__contents">
+                {quiz.description.contents.map((content, i) => (
+                  <li key={`description-content-${i}`}>{content}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {showAnswer && quiz.answerType === 'choice' && quiz.choices && (
             <div
               className={classNames({
                 choices: true,
@@ -170,6 +181,13 @@ const Quiz = ({
                   </p>
                 );
               })}
+            </div>
+          )}
+          {showAnswer && quiz.answerType === 'essay' && (
+            <div className="essay-field">
+              <div></div>
+              <div></div>
+              <div></div>
             </div>
           )}
         </>
@@ -205,6 +223,34 @@ const quizCSS = (theme: Theme) => css`
     ${Typography.body14}
     margin-top: ${Spacing.small}px;
     text-align: right;
+  }
+
+  .description {
+    border: 1px solid ${theme.var.sol_gray_300};
+    padding: ${Spacing.small}px;
+
+    &__title {
+      text-align: center;
+    }
+
+    &__contents {
+      line-height: 1.5;
+      
+      li {
+        list-style: disc;
+        margin-left: ${Spacing.small}px;
+        margin-top: ${Spacing.small}px;
+      }
+    }
+  }
+
+  .essay-field {
+    margin-top: ${Spacing.large}px;
+
+    > div {
+      border-bottom: 1px solid ${theme.var.sol_gray_900};
+      height: 32px;
+    }
   }
   .choices {
     margin-top: ${Spacing.large}px;
